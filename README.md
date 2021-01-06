@@ -56,4 +56,13 @@ pg_search
 
                                https://github.com/Casecommons/pg_search
 
+...
 ```
+
+#### Contacts
+https://github.com/phlowerteam
+phlowerteam@gmail.com
+
+#### License
+Copyright (c) 2021 PhlowerTeam
+MIT License
