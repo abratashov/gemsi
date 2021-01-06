@@ -3,10 +3,12 @@
 class Gemsi
   GEM_LINE_PATTERN = /^\s*(gem|group|ruby)/.freeze
   GEM_NAME_PATTERN = /^\s*gem\s*[\'\"]([-_\w\d]*)[\'\"]/.freeze
+  GEMFILE = 'Gemfile'
+  TAB_SIZE = 20
 
   class << self
-    def main
-      gems = parsed_gems
+    def main(path = nil)
+      gems = parsed_gems(path)
       gem_names_arr = []
       gems.each do |gem|
         next if !gem[:is_parsed] || gem[:name].nil?
@@ -16,16 +18,12 @@ class Gemsi
       end
       name_size = gem_names_arr.max_by(&:length).size
       print_descriptions(gems, name_size)
-
-      puts
-      puts "Gemsi generator tool, https://github.com/phlowerteam/gemsi, MIT License, (c) 2020 PhlowerTeam"
-      puts
     end
 
     private
 
     def parsed_gems(path = nil)
-      gemfile = path || 'Gemfile'
+      gemfile = path || GEMFILE
       IO.read(gemfile).split("\n").map do |string|
         is_parsed = string.match(GEM_LINE_PATTERN) ? true : false
         name = is_parsed ? string.match(GEM_NAME_PATTERN)&.send(:[], 1) : nil
@@ -51,33 +49,40 @@ class Gemsi
                                     result[:description]
                                   else
                                     "#{result[:description]} #{result[:summary]}"
-      end
+                                  end
       result[:github_search] = result[:homepage]&.match(/github/) ? ' ' : "https://github.com/search?q=#{spec.name}&ref=cmdform"
       result
     end
 
-    def print_descriptions(gems, name_size = 20)
+    def print_descriptions(gems, name_size = TAB_SIZE)
+      tab = ' ' * name_size
+
       gems.each do |gem|
         next unless gem[:is_parsed]
 
         puts gem[:name].ljust(name_size).to_s if gem[:name]
+
         if gem[:spec].nil?
           gem[:text].scan(/.{0,80}/).each do |part|
-            puts "#{' ' * name_size}#{part}"
+            prn(part, tab)
           end
         else
-          puts "#{' ' * name_size}#{gem[:spec][:version]} "
+          prn(gem[:spec][:version], tab)
+
           gem[:spec][:full_description].scan(/.{0,80}/).each do |part|
-            puts "#{' ' * name_size}#{part}"
+            prn(part, tab)
           end
+
           if gem[:spec][:homepage]
-            puts "#{' ' * name_size}#{gem[:spec][:homepage]}\n"
-            puts "#{' ' * name_size}#{gem[:spec][:github_search]}\n"
+            prn("#{gem[:spec][:homepage]}\n", tab)
+            prn("#{gem[:spec][:github_search]}\n", tab)
           end
         end
       end
     end
+
+    def prn(text, tab = ' ' * TAB_SIZE)
+      puts "#{tab}#{text}"
+    end
   end
 end
-
-Gemsi.main
